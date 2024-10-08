@@ -176,7 +176,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_HEART_RATE) {
-            float heartRate = event.values[0];
+            int heartRate = (int)event.values[0];
             textViewHeartRate.setText("심박수: " + heartRate + " bpm"); // 심박수 표시
             sendHeartRateToServer(heartRate); // 심박수 데이터를 서버로 전송 - 시작 후 서버에 전송 할 수 있도록 변경
         }
@@ -206,7 +206,7 @@ public class MainActivity extends Activity implements SensorEventListener {
 
 
     // 심박수 센서 데이터 전송
-    private void sendHeartRateToServer(float heartRate) {
+    private void sendHeartRateToServer(int heartRate) {
         new Thread(() -> {
             try {
                 URL url = new URL(heartUrl);
@@ -215,7 +215,7 @@ public class MainActivity extends Activity implements SensorEventListener {
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
-                String jsonInputString = "{\"heartRate\": " + heartRate + "}";
+                String jsonInputString = "{\"heartrate\": " + heartRate + "}";
                 Log.d("TAG___", "Sending Heart Rate: " + jsonInputString);
 
                 try (OutputStream os = connection.getOutputStream()) {
