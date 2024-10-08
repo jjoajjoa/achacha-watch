@@ -44,8 +44,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     private boolean isTimerRunning = false; // 타이머 상태 추적
 
     // 자기 url로  바꿔야 합니다 -- 그리고 지금은 테스트 로 넣어 둔 것이라 나중에 바꿔야 합니다.
-    private String heartUrl = "http://172.168.30.145:9000/test/from-watch"; // 웹 서버 URL
-    private String drivingUrl = "http://172.168.30.145:9000/test/from-watch-end"; // 웹 서버 URL
+    private String heartUrl = "http://172.168.30.145:9000/heartrate/heartrate"; // 웹 서버 URL
+    private String drivingUrl = "http://172.168.30.145:9000/heartrate/drivingtime"; // 웹 서버 URL
 
 
     // 앱 메인 (실행될 때 호출됨)
