@@ -9,6 +9,7 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -44,9 +45,12 @@ public class MainActivity extends Activity implements SensorEventListener {
     private boolean isTimerRunning = false; // 타이머 상태 추적
 
     // 자기 url로  바꿔야 합니다 -- 그리고 지금은 테스트 로 넣어 둔 것이라 나중에 바꿔야 합니다.
-    private String heartUrl = "http://172.168.30.145:9000/heartrate/heartrate"; // 웹 서버 URL
-    private String drivingUrl = "http://172.168.30.145:9000/heartrate/drivingtime"; // 웹 서버 URL
+    private String heartUrl = "http://172.168.30.158:9000/heartrate/heartrate"; // 웹 서버 URL
+    private String drivingUrl = "http://172.168.30.158:9000/heartrate/drivingtime"; // 웹 서버 URL
 
+    // 진동 설정
+    private Vibrator vibrator;
+    private int vibrationCount = 0;
 
     // 앱 메인 (실행될 때 호출됨)
     @Override
@@ -61,6 +65,11 @@ public class MainActivity extends Activity implements SensorEventListener {
         startButton = findViewById(R.id.startButton);
         pauseButton = findViewById(R.id.pauseButton);
         stopButton = findViewById(R.id.stopButton);
+        // 진동 초기화
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+        if (vibrator == null) {
+            Log.e("TAG___", "Vibrator is not available");
+        }
 
         // 버튼 클릭 이벤트 설정
         startButton.setOnClickListener(view -> startTimer()); // 시작 버튼 클릭 시 타이머 시작
@@ -74,6 +83,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         // 현재 시간 업데이트 시작
         startUpdatingTime();
         setupHeartRateSensor(); // 심박수 센서 설정
+
     }
 
     // 현재 시간 업데이트
@@ -179,6 +189,8 @@ public class MainActivity extends Activity implements SensorEventListener {
             int heartRate = (int)event.values[0];
             textViewHeartRate.setText("심박수: " + heartRate + " bpm"); // 심박수 표시
             sendHeartRateToServer(heartRate); // 심박수 데이터를 서버로 전송 - 시작 후 서버에 전송 할 수 있도록 변경
+            // 전송 할떄 넣긴 했지만 진동 설정은 나중에 다시 설정 해야 합니다 지금은 테스트로 넣어둔 설정입니다.
+            onHeartRateChanged(heartRate);
         }
     }
 
@@ -264,6 +276,25 @@ public class MainActivity extends Activity implements SensorEventListener {
         }).start();
     }
 
-
+    // 진동 설정 -- 심박수 몇 이하일 때 울리게
+    public void onHeartRateChanged(int heartRate) {
+        // 심박수가 숫자 이하일 때
+        if (heartRate < 90) {
+            if (vibrator != null) {
+                vibrate();
+            } else {
+                Log.e("TAG___", "Vibrator is not initialized");
+            }
+        }
+    }
+    // 진동 설정
+    private void vibrate() {
+        long[] pattern = {0, 500, 100, 500}; // 진동 패턴
+        if (vibrator != null) {
+            vibrator.vibrate(pattern, -1); // 진동
+        } else {
+            Log.e("TAG___", "Vibrator is not available during vibrate()");
+        }
+    }
 
 }
