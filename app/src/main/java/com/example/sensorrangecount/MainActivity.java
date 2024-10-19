@@ -279,7 +279,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     // 진동 설정 -- 심박수 몇 이하일 때 울리게
     public void onHeartRateChanged(int heartRate) {
         // 심박수가 숫자 이하일 때
-        if (heartRate < 90) {
+        if (heartRate < 60) {
             if (vibrator != null) {
                 vibrate();
             } else {
@@ -291,7 +291,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private void vibrate() {
         long[] pattern = {0, 500, 100, 500}; // 진동 패턴
         if (vibrator != null) {
-            vibrator.vibrate(pattern, -1); // 진동
+            vibrator.vibrate(pattern, -1); // 진동 - 1번 울림
         } else {
             Log.e("TAG___", "Vibrator is not available during vibrate()");
         }
