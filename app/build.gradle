@@ -26,6 +26,8 @@ android {
 }
 
 dependencies {
+    // 핸드폰 통신을 위한 모듈
+    implementation 'com.google.android.gms:play-services-wearable:latest_version'
 
     implementation 'androidx.appcompat:appcompat:1.4.2'
     implementation 'com.google.android.material:material:1.5.0'

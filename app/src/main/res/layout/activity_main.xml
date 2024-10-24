@@ -50,7 +50,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="3dp"
-                android:background="@android:color/darker_gray"
+                android:backgroundTint="@android:color/holo_green_light"
                 android:text="시작" />
 
             <LinearLayout
@@ -66,8 +66,7 @@
                     android:text="휴식"
                     android:visibility="gone"
                     android:layout_marginTop="3dp"
-                    android:layout_marginEnd="10dp"
-                    android:background="@android:color/darker_gray"/>
+                    android:backgroundTint="@android:color/holo_orange_light"/>
 
                 <Button
                     android:id="@+id/stopButton"
@@ -75,10 +74,9 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:layout_marginTop="3dp"
-                    android:layout_marginStart="10dp"
                     android:visibility="gone"
                     android:text="종료"
-                    android:background="@android:color/holo_red_dark"/>
+                    android:backgroundTint="@android:color/holo_red_dark"/>
             </LinearLayout>
         </LinearLayout>
 
