@@ -45,8 +45,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     private boolean isTimerRunning = false; // 타이머 상태 추적
 
     // 자기 url로  바꿔야 합니다 -- 그리고 지금은 테스트 로 넣어 둔 것이라 나중에 바꿔야 합니다.
-    private String heartUrl = "http://172.168.30.158:9000/heartrate/heartrate"; // 웹 서버 URL
-    private String drivingUrl = "http://172.168.30.158:9000/heartrate/drivingtime"; // 웹 서버 URL
+    private String heartUrl = "http://172.168.30.145:9000/heartrate/heartrate"; // 웹 서버 URL
+    private String drivingUrl = "http://172.168.30.145:9000/heartrate/drivingtime"; // 웹 서버 URL
 
     // 진동 설정
     private Vibrator vibrator;
@@ -91,7 +91,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         handler.post(new Runnable() {
             @Override
             public void run() {
-                String currentTime = new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date());
+                String currentTime = new SimpleDateFormat("HH:mm", Locale.getDefault()).format(new Date());
                 textViewTime.setText(currentTime); // 현재 시간 설정
                 handler.postDelayed(this, 1000); // 1초마다 업데이트
             }

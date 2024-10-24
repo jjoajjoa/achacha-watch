@@ -11,7 +11,7 @@
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:padding="@dimen/inner_frame_layout_padding"
+        android:padding="2dp"
         app:layout_boxedEdges="all">
 
         <LinearLayout
@@ -26,15 +26,14 @@
                 android:layout_height="wrap_content"
                 android:gravity="center"
                 android:text="현재시간"
-                android:textSize="24sp"
                 android:textColor="#ffffff"
-                />
+                android:textSize="30sp" />
 
             <TextView
                 android:id="@+id/HeartRate"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="10dp"
                 android:text="심박수: N/A"
                 android:textSize="18sp" />
 
@@ -42,7 +41,7 @@
                 android:id="@+id/drivingTime"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="운행시간"
+                android:text="운행시간: 00:00:00"
                 android:textSize="18sp" />
 
             <Button
@@ -62,21 +61,21 @@
                     android:id="@+id/pauseButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="휴식"
-                    android:visibility="gone"
                     android:layout_marginTop="3dp"
-                    android:backgroundTint="@android:color/holo_orange_light"/>
+                    android:layout_weight="1"
+                    android:backgroundTint="@android:color/holo_orange_light"
+                    android:text="휴식"
+                    android:visibility="gone" />
 
                 <Button
                     android:id="@+id/stopButton"
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
                     android:layout_marginTop="3dp"
-                    android:visibility="gone"
+                    android:layout_weight="1"
+                    android:backgroundTint="@android:color/holo_red_dark"
                     android:text="종료"
-                    android:backgroundTint="@android:color/holo_red_dark"/>
+                    android:visibility="gone" />
             </LinearLayout>
         </LinearLayout>
 
