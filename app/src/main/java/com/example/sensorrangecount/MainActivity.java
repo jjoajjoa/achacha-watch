@@ -23,7 +23,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends Activity implements SensorEventListener {
@@ -283,7 +285,52 @@ public class MainActivity extends Activity implements SensorEventListener {
         }).start(); // 새 스레드에서 실행
     }
 
-    // 심박수 변화 시 진동 설정
+    private final List<Integer> heartRateList = new ArrayList<>();
+
+    public void onHeartRateChanged(int heartRate) {
+        // 심박수를 리스트에 추가
+        if(heartRateList.size() <= 5){
+            heartRateList.add(heartRate);
+        }
+        double average = calculateAverage(heartRateList);
+        Log.d("TAG___", "평균 심박수 : " + average); // 평균값 로그 출력
+        double threshold = average * 0.93; // 평균의 7% 감소 값
+
+        // 심박수가 특정 수치 이하일 경우 진동
+        if (heartRate < threshold) { // 60 이하일 때 진동
+            if (vibrator != null) {
+                vibrate(); // 진동 메서드 호출
+            } else {
+                Log.e("TAG___", "Vibrator is not initialized"); // 진동 서비스 초기화 안 됐을 경우 로그 출력
+            }
+        }
+
+    }
+
+    // 평균 계산 메서드
+    private double calculateAverage(List<Integer> heartRates) {
+        int sum = 0;
+        for (int rate : heartRates) {
+            sum += rate;
+        }
+        return (double) sum / heartRates.size();
+    }
+
+    // 진동 메서드
+    private void vibrate() {
+        long[] pattern = {0, 500, 100, 500}; // 진동 패턴 설정
+        if (vibrator != null) {
+            vibrator.vibrate(pattern, -1); // 진동 발생
+        } else {
+            Log.e("TAG___", "Vibrator is not available during vibrate()"); // 진동 서비스 사용 불가일 경우 로그 출력
+        }
+    }
+
+
+
+
+
+   /* // 심박수 변화 시 진동 설정
     public void onHeartRateChanged(int heartRate) {
         // 심박수가 특정 수치 이하일 경우 진동
         if (heartRate < 60) { // 60 이하일 때 진동
@@ -303,5 +350,5 @@ public class MainActivity extends Activity implements SensorEventListener {
         } else {
             Log.e("TAG___", "Vibrator is not available during vibrate()"); // 진동 서비스 사용 불가일 경우 로그 출력
         }
-    }
+    }*/
 }
