@@ -326,10 +326,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
     }
 
-
-
-
-
    /* // 심박수 변화 시 진동 설정
     public void onHeartRateChanged(int heartRate) {
         // 심박수가 특정 수치 이하일 경우 진동

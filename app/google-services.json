@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "519871563945",
+    "project_id": "achacha-6bf3a",
+    "storage_bucket": "achacha-6bf3a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:519871563945:android:20c668e17872053c8a01b8",
+        "android_client_info": {
+          "package_name": "com.achacha_mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBwuFgwiG0MZe39pOp3-0L_Y6NOOGkX1Yk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

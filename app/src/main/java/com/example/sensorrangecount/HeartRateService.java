@@ -19,6 +19,9 @@ import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class HeartRateService extends Service implements SensorEventListener {
     private SensorManager sensorManager; // 센서 매니저
@@ -54,7 +57,6 @@ public class HeartRateService extends Service implements SensorEventListener {
         if (wakeLock != null && wakeLock.isHeld()) {
             wakeLock.release(); // Wake Lock 해제
         }
-
     }
 
     // 센서 데이터 변경 시 호출
@@ -64,12 +66,18 @@ public class HeartRateService extends Service implements SensorEventListener {
             int heartRate = (int) event.values[0];
             Log.d("TAG___", "심박수: " + heartRate);
 
+            //시간
+            long currentTimeMillis = System.currentTimeMillis();
+            String heartRateLogTime = formatDate(currentTimeMillis);
+            Log.d("TAG___", "시간: " + heartRateLogTime);
+
             // 서버로 전송
-            sendHeartRateToServer(heartRate);
+            sendHeartRateToServer(heartRate, heartRateLogTime);
 
             // 심박수 데이터를 브로드캐스트로 전송
             Intent intent = new Intent("HEART_RATE_UPDATE");
             intent.putExtra("heartRate", heartRate);
+            intent.putExtra("heartRateLogTime", heartRateLogTime);
             LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }
@@ -94,7 +102,7 @@ public class HeartRateService extends Service implements SensorEventListener {
         Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID)
                 .setContentTitle("Heart Rate Monitoring")
                 .setContentText("Monitoring your heart rate...")
-                .setPriority(Notification.PRIORITY_LOW); // 중요도 설정
+                .setPriority(Notification.PRIORITY_HIGH); // 중요도 설정
         return builder.build();
     }
 
@@ -123,7 +131,7 @@ public class HeartRateService extends Service implements SensorEventListener {
     }
 
     // 심박수 서버 전송 메서드
-    private void sendHeartRateToServer(int heartRate) {
+    private void sendHeartRateToServer(int heartRate, String heartRateLogTime) {
         new Thread(() -> {
             try {
                 URL url = new URL(heartUrl);
@@ -132,7 +140,7 @@ public class HeartRateService extends Service implements SensorEventListener {
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
-                String jsonInputString = "{\"heartrate\": " + heartRate + "}";
+                String jsonInputString = "{\"heartrate\": " + heartRate + ", \"heartratelogtime\": \"" + heartRateLogTime + "\"}";
                 Log.d("TAG___", "Sending Heart Rate: " + jsonInputString);
 
                 try (OutputStream os = connection.getOutputStream()) {
@@ -151,7 +159,15 @@ public class HeartRateService extends Service implements SensorEventListener {
             }
         }).start();
     }
-
+    
+    // 시간 보내기 설정 (포맷)
+    private String formatDate(long timeInMillis) {
+        Date date = new Date(timeInMillis);
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
+        return sdf.format(date);
+    }
+    
+    
     // 바인딩을 위한 메서드
     @Override
     public IBinder onBind(Intent intent) {
