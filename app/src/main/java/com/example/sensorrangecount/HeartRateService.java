@@ -29,7 +29,7 @@ public class HeartRateService extends Service implements SensorEventListener {
     private PowerManager.WakeLock wakeLock; // Wake Lock
 
     private static final String CHANNEL_ID = "HeartRateServiceChannel"; // 알림 채널 ID
-    private String heartUrl = "http://172.168.30.145:9000/heartrate/heartrate"; // 웹 서버 URL
+    private String heartUrl = "http://172.168.10.88:9000/heartrate/heartrate"; // 웹 서버 URL
 
     // 서비스가 생성될 때 호출
     @Override
@@ -74,7 +74,7 @@ public class HeartRateService extends Service implements SensorEventListener {
             // 서버로 전송
             sendHeartRateToServer(heartRate, heartRateLogTime);
 
-            // 심박수 데이터를 브로드캐스트로 전송
+            // 심박수 데이터를 브로드캐스트로 전송 - "이부분 필요한지 확인 필요"
             Intent intent = new Intent("HEART_RATE_UPDATE");
             intent.putExtra("heartRate", heartRate);
             intent.putExtra("heartRateLogTime", heartRateLogTime);

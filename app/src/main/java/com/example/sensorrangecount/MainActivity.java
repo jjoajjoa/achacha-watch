@@ -19,6 +19,8 @@ import android.widget.TextView;
 
 import androidx.core.app.ActivityCompat;
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -51,9 +53,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     private boolean isTimerRunning = false; // 타이머 실행 상태를 추적하는 변수
 
     // 서버 URL (테스트용 URL, 실제 사용 시 변경 필요)
-    private String heartUrl = "http://172.168.30.145:9000/heartrate/heartrate"; // 심박수 전송용 서버 URL
-    private String drivingUrl = "http://172.168.30.145:9000/heartrate/drivingtime"; // 운행 시간 전송용 서버 URL
+    private String heartUrl = "http://172.168.10.88:9000/heartrate/heartrate"; // 심박수 전송용 서버 URL
+    private String drivingUrl = "http://172.168.10.88:9000/heartrate/drivingtime"; // 운행 시간 전송용 서버 URL
 
+    static String baseurl = "http://172.168.10.88:9000/";
     // 진동 서비스
     private Vibrator vibrator; // 진동 서비스 객체
 
@@ -123,6 +126,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         startButton.setVisibility(View.GONE); // 시작 버튼 숨김
         pauseButton.setVisibility(View.VISIBLE); // 일시정지 버튼 보임
         stopButton.setVisibility(View.VISIBLE); // 정지 버튼 보임
+
+        sendStartNoti();
     }
 
     // 타이머 일시정지
@@ -132,11 +137,13 @@ public class MainActivity extends Activity implements SensorEventListener {
             accumulatedTime += System.currentTimeMillis() - startTime; // 누적 시간 계산
             handler.removeCallbacks(updateTimeRunnable); // 타이머 업데이트 중지
             pauseButton.setText("휴식 끝"); // 버튼 텍스트 변경
+            sendRestNoti();
         } else { // 타이머가 일시정지 상태일 경우
             startTime = System.currentTimeMillis(); // 시작 시간 갱신
             isTimerRunning = true; // 타이머 상태 변경
             handler.post(updateTimeRunnable); // 타이머 업데이트 시작
             pauseButton.setText("휴식"); // 버튼 텍스트 변경
+            sendEndRestNoti();
         }
     }
 
@@ -169,6 +176,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         // 휴식 중 누적 시간 초기화
         accumulatedTime = 0;
         totalDrivingTime = 0;
+
+        sendEndNoti();
     }
 
     // 타이머 업데이트를 위한 Runnable
@@ -300,6 +309,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (heartRate < threshold) { // 60 이하일 때 진동
             if (vibrator != null) {
                 vibrate(); // 진동 메서드 호출
+                sendEmergencyNoti(); // 졸음 알림 설정
             } else {
                 Log.e("TAG___", "Vibrator is not initialized"); // 진동 서비스 초기화 안 됐을 경우 로그 출력
             }
@@ -326,25 +336,114 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
     }
 
-   /* // 심박수 변화 시 진동 설정
-    public void onHeartRateChanged(int heartRate) {
-        // 심박수가 특정 수치 이하일 경우 진동
-        if (heartRate < 60) { // 60 이하일 때 진동
-            if (vibrator != null) {
-                vibrate(); // 진동 메서드 호출
-            } else {
-                Log.e("TAG___", "Vibrator is not initialized"); // 진동 서비스 초기화 안 됐을 경우 로그 출력
+    // 운행 시작 알림
+    public void sendStartNoti() {
+        new Thread(() -> {
+            try {
+                URL url = new URL(baseurl + "noti/start"); // URL 설정
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
+                connection.setRequestMethod("GET"); // 요청 방식 설정
+                connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
+
+                int responseCode = connection.getResponseCode(); // 응답 코드 받기
+                Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
+
+                // 응답 코드가 OK가 아닐 경우 에러 로그 출력
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    Log.e("TAG___", "Error: " + connection.getResponseMessage());
+                }
+            } catch (Exception e) {
+                Log.e("TAG___", "Error sending driving time: " + e.getMessage()); // 예외 발생 시 에러 로그 출력
             }
-        }
+        }).start(); // 새 스레드에서 실행
+    };
+
+
+    // 운행 종료 알림
+    public void sendEndNoti() {
+        new Thread(() -> {
+            try {
+                URL url = new URL(baseurl + "noti/end"); // URL 설정
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
+                connection.setRequestMethod("GET"); // 요청 방식 설정
+                connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
+
+                int responseCode = connection.getResponseCode(); // 응답 코드 받기
+                Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
+
+                // 응답 코드가 OK가 아닐 경우 에러 로그 출력
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    Log.e("TAG___", "Error: " + connection.getResponseMessage());
+                }
+            } catch (Exception e) {
+                Log.e("TAG___", "Error sending driving time: " + e.getMessage()); // 예외 발생 시 에러 로그 출력
+            }
+        }).start(); // 새 스레드에서 실행
     }
 
-    // 진동 메서드
-    private void vibrate() {
-        long[] pattern = {0, 500, 100, 500}; // 진동 패턴 설정
-        if (vibrator != null) {
-            vibrator.vibrate(pattern, -1); // 진동 발생
-        } else {
-            Log.e("TAG___", "Vibrator is not available during vibrate()"); // 진동 서비스 사용 불가일 경우 로그 출력
-        }
-    }*/
+    // 휴식 알림
+    public void sendRestNoti() {
+        new Thread(() -> {
+            try {
+                URL url = new URL(baseurl + "noti/rest"); // URL 설정
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
+                connection.setRequestMethod("GET"); // 요청 방식 설정
+                connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
+
+                int responseCode = connection.getResponseCode(); // 응답 코드 받기
+                Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
+
+                // 응답 코드가 OK가 아닐 경우 에러 로그 출력
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    Log.e("TAG___", "Error: " + connection.getResponseMessage());
+                }
+            } catch (Exception e) {
+                Log.e("TAG___", "Error sending driving time: " + e.getMessage()); // 예외 발생 시 에러 로그 출력
+            }
+        }).start(); // 새 스레드에서 실행
+    }
+
+    // 휴식 끝 알림
+    public static void sendEndRestNoti() {
+        new Thread(() -> {
+            try {
+                URL url = new URL(baseurl + "noti/endrest"); // URL 설정
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
+                connection.setRequestMethod("GET"); // 요청 방식 설정
+                connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
+
+                int responseCode = connection.getResponseCode(); // 응답 코드 받기
+                Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
+
+                // 응답 코드가 OK가 아닐 경우 에러 로그 출력
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    Log.e("TAG___", "Error: " + connection.getResponseMessage());
+                }
+            } catch (Exception e) {
+                Log.e("TAG___", "Error sending driving time: " + e.getMessage()); // 예외 발생 시 에러 로그 출력
+            }
+        }).start(); // 새 스레드에서 실행
+    }
+
+    // 졸음감지 알림
+    public static void sendEmergencyNoti() {
+        new Thread(() -> {
+            try {
+                URL url = new URL(baseurl + "noti/emergency"); // URL 설정
+                HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
+                connection.setRequestMethod("GET"); // 요청 방식 설정
+                connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
+
+                int responseCode = connection.getResponseCode(); // 응답 코드 받기
+                Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
+
+                // 응답 코드가 OK가 아닐 경우 에러 로그 출력
+                if (responseCode != HttpURLConnection.HTTP_OK) {
+                    Log.e("TAG___", "Error: " + connection.getResponseMessage());
+                }
+            } catch (Exception e) {
+                Log.e("TAG___", "Error sending driving time: " + e.getMessage()); // 예외 발생 시 에러 로그 출력
+            }
+        }).start(); // 새 스레드에서 실행
+    }
 }
