@@ -4,6 +4,7 @@ import android.app.Notification;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -12,6 +13,7 @@ import android.hardware.SensorManager;
 import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.os.Vibrator;
 import android.util.Log;
 
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
@@ -20,13 +22,19 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
 public class HeartRateService extends Service implements SensorEventListener {
     private SensorManager sensorManager; // 센서 매니저
     private Sensor heartRateSensor; // 심박수 센서
     private PowerManager.WakeLock wakeLock; // Wake Lock
+
+    private Vibrator vibrator; // 진동 서비스 객체
+    List<Integer> heartRateList = MainActivity.heartRateList;
+
 
     private static final String CHANNEL_ID = "HeartRateServiceChannel"; // 알림 채널 ID
     private String heartUrl = "http://172.168.10.88:9000/heartrate/heartrate"; // 웹 서버 URL
@@ -38,6 +46,8 @@ public class HeartRateService extends Service implements SensorEventListener {
         setupHeartRateSensor(); // 심박수 센서 설정
         createNotificationChannel(); // 알림 채널 생성
         acquireWakeLock(); // Wake Lock 획득
+
+        vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
     }
 
     // 서비스가 시작될 때 호출
@@ -73,6 +83,22 @@ public class HeartRateService extends Service implements SensorEventListener {
 
             // 서버로 전송
             sendHeartRateToServer(heartRate, heartRateLogTime);
+
+            if (heartRateList.size() < 5) {
+                heartRateList.add(heartRate);
+            }
+            double average = calculateAverage(heartRateList);
+            Log.d("TAG___", "평균 심박수 : " + average);
+            double threshold = average * 0.93;
+
+            if (heartRate < threshold) {
+                if (vibrator != null) {
+                    vibrate();
+                } else {
+                    Log.e("TAG___", "Vibrator is not initialized");
+                }
+            }
+
 
             // 심박수 데이터를 브로드캐스트로 전송 - "이부분 필요한지 확인 필요"
             Intent intent = new Intent("HEART_RATE_UPDATE");
@@ -166,8 +192,24 @@ public class HeartRateService extends Service implements SensorEventListener {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
         return sdf.format(date);
     }
-    
-    
+
+    private double calculateAverage(List<Integer> heartRates) {
+        int sum = 0;
+        for (int rate : heartRates) {
+            sum += rate;
+        }
+        return (double) sum / heartRates.size();
+    }
+
+    private void vibrate() {
+        long[] pattern = {0, 500, 100, 500};
+        if (vibrator != null) {
+            vibrator.vibrate(pattern, -1);
+        } else {
+            Log.e("TAG___", "Vibrator is not available during vibrate()");
+        }
+    }
+
     // 바인딩을 위한 메서드
     @Override
     public IBinder onBind(Intent intent) {

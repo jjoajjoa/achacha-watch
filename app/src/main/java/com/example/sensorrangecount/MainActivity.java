@@ -294,7 +294,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         }).start(); // 새 스레드에서 실행
     }
 
-    private final List<Integer> heartRateList = new ArrayList<>();
+    static List<Integer> heartRateList = new ArrayList<>();
 
     public void onHeartRateChanged(int heartRate) {
         // 심박수를 리스트에 추가
