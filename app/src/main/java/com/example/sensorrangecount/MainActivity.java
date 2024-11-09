@@ -336,11 +336,14 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
     }
 
+    static String userId = "E001";
+
+
     // 운행 시작 알림
     public void sendStartNoti() {
         new Thread(() -> {
             try {
-                URL url = new URL(baseurl + "noti/start"); // URL 설정
+                URL url = new URL(baseurl + "noti/start/" + userId); // URL 설정
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
                 connection.setRequestMethod("GET"); // 요청 방식 설정
                 connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
@@ -363,7 +366,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     public void sendEndNoti() {
         new Thread(() -> {
             try {
-                URL url = new URL(baseurl + "noti/end"); // URL 설정
+                URL url = new URL(baseurl + "noti/end/" + userId); // URL 설정
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
                 connection.setRequestMethod("GET"); // 요청 방식 설정
                 connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
@@ -385,7 +388,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     public void sendRestNoti() {
         new Thread(() -> {
             try {
-                URL url = new URL(baseurl + "noti/rest"); // URL 설정
+                URL url = new URL(baseurl + "noti/rest/" + userId); // URL 설정
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
                 connection.setRequestMethod("GET"); // 요청 방식 설정
                 connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
@@ -407,7 +410,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     public static void sendEndRestNoti() {
         new Thread(() -> {
             try {
-                URL url = new URL(baseurl + "noti/endrest"); // URL 설정
+                URL url = new URL(baseurl + "noti/endrest/" + userId); // URL 설정
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
                 connection.setRequestMethod("GET"); // 요청 방식 설정
                 connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
@@ -429,7 +432,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     public static void sendEmergencyNoti() {
         new Thread(() -> {
             try {
-                URL url = new URL(baseurl + "noti/emergency"); // URL 설정
+                URL url = new URL(baseurl + "noti/emergency/" + userId); // URL 설정
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
                 connection.setRequestMethod("GET"); // 요청 방식 설정
                 connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정

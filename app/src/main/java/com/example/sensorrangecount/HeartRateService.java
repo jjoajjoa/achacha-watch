@@ -81,30 +81,31 @@ public class HeartRateService extends Service implements SensorEventListener {
             String heartRateLogTime = formatDate(currentTimeMillis);
             Log.d("TAG___", "시간: " + heartRateLogTime);
 
-            // 서버로 전송
-            sendHeartRateToServer(heartRate, heartRateLogTime);
+            if (heartRate != 0) {
+                // 서버로 전송
+                sendHeartRateToServer(heartRate, heartRateLogTime);
 
-            if (heartRateList.size() < 5) {
-                heartRateList.add(heartRate);
-            }
-            double average = calculateAverage(heartRateList);
-            Log.d("TAG___", "평균 심박수 : " + average);
-            double threshold = average * 0.93;
-
-            if (heartRate < threshold) {
-                if (vibrator != null) {
-                    vibrate();
-                } else {
-                    Log.e("TAG___", "Vibrator is not initialized");
+                if (heartRateList.size() < 60) {
+                    heartRateList.add(heartRate);
                 }
+                double average = calculateAverage(heartRateList);
+                Log.d("TAG___", "평균 심박수 : " + average);
+                double threshold = average * 0.93;
+
+                if (heartRate < threshold) {
+                    if (vibrator != null) {
+                        vibrate();
+                    } else {
+                        Log.e("TAG___", "Vibrator is not initialized");
+                    }
+                }
+
+                // 심박수 데이터를 브로드캐스트로 전송
+                Intent intent = new Intent("HEART_RATE_UPDATE");
+                intent.putExtra("heartRate", heartRate);
+                intent.putExtra("heartRateLogTime", heartRateLogTime);
+                LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
             }
-
-
-            // 심박수 데이터를 브로드캐스트로 전송 - "이부분 필요한지 확인 필요"
-            Intent intent = new Intent("HEART_RATE_UPDATE");
-            intent.putExtra("heartRate", heartRate);
-            intent.putExtra("heartRateLogTime", heartRateLogTime);
-            LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
         }
     }
 
