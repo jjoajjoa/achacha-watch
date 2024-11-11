@@ -137,14 +137,28 @@ public class MainActivity extends Activity implements SensorEventListener {
             accumulatedTime += System.currentTimeMillis() - startTime; // 누적 시간 계산
             handler.removeCallbacks(updateTimeRunnable); // 타이머 업데이트 중지
             pauseButton.setText("휴식 끝"); // 버튼 텍스트 변경
+            startRest();
             sendRestNoti();
         } else { // 타이머가 일시정지 상태일 경우
             startTime = System.currentTimeMillis(); // 시작 시간 갱신
             isTimerRunning = true; // 타이머 상태 변경
             handler.post(updateTimeRunnable); // 타이머 업데이트 시작
             pauseButton.setText("휴식"); // 버튼 텍스트 변경
+            stopRest();
             sendEndRestNoti();
         }
+    }
+
+    private void startRest() {
+        Intent serviceIntent = new Intent(this, HeartRateService.class);
+        serviceIntent.putExtra("action", "startRest");
+        startService(serviceIntent); // 휴식 시작을 HeartRateService로 전달
+    }
+
+    private void stopRest() {
+        Intent serviceIntent = new Intent(this, HeartRateService.class);
+        serviceIntent.putExtra("action", "endRest");
+        startService(serviceIntent); // 휴식 종료를 HeartRateService로 전달
     }
 
     // 타이머 종료
@@ -203,7 +217,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             int heartRate = (int) event.values[0]; // 심박수 값 가져오기
             textViewHeartRate.setText("심박수: " + heartRate + " bpm"); // 심박수 표시
            // sendHeartRateToServer(heartRate); // 서버로 심박수 데이터 전송  -- 백그라운드랑 중복되서 삭제
-            onHeartRateChanged(heartRate); // 심박수 변화 체크
+           // onHeartRateChanged(heartRate); // 심박수 변화 체크
         }
     }
 
@@ -296,9 +310,9 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     static List<Integer> heartRateList = new ArrayList<>();
 
-    public void onHeartRateChanged(int heartRate) {
+    /*public void onHeartRateChanged(int heartRate) {
         // 심박수를 리스트에 추가
-        if(heartRateList.size() <= 5){
+        if(heartRateList.size() <= 60){
             heartRateList.add(heartRate);
         }
         double average = calculateAverage(heartRateList);
@@ -315,7 +329,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         }
 
-    }
+    }*/
 
     // 평균 계산 메서드
     private double calculateAverage(List<Integer> heartRates) {

@@ -35,6 +35,7 @@ public class HeartRateService extends Service implements SensorEventListener {
     private Vibrator vibrator; // 진동 서비스 객체
     List<Integer> heartRateList = MainActivity.heartRateList;
 
+    private boolean isResting = false;  // 휴식 상태를 추적하는 변수
 
     private static final String CHANNEL_ID = "HeartRateServiceChannel"; // 알림 채널 ID
     private String heartUrl = "http://172.168.10.88:9000/heartrate/heartrate"; // 웹 서버 URL
@@ -54,7 +55,7 @@ public class HeartRateService extends Service implements SensorEventListener {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         startForeground(1, createNotification()); // 포그라운드 서비스 시작
-        return START_STICKY; // 서비스가 강제로 종료되더라도 다시 시작
+        return START_NOT_STICKY;
     }
 
     // 서비스가 종료될 때 호출
@@ -92,7 +93,7 @@ public class HeartRateService extends Service implements SensorEventListener {
                 Log.d("TAG___", "평균 심박수 : " + average);
                 double threshold = average * 0.93;
 
-                if (heartRate < threshold) {
+                if (!isResting && heartRate < threshold) {
                     if (vibrator != null) {
                         vibrate();
                     } else {
@@ -208,6 +209,22 @@ public class HeartRateService extends Service implements SensorEventListener {
             vibrator.vibrate(pattern, -1);
         } else {
             Log.e("TAG___", "Vibrator is not available during vibrate()");
+        }
+    }
+
+    // 휴식 시작
+    private void startRest() {
+        if (!isResting) {
+            isResting = true;
+            Log.d("HeartRateService", "휴식 시작");
+        }
+    }
+
+    // 휴식 종료
+    private void stopRest() {
+        if (isResting) {
+            isResting = false;
+            Log.d("HeartRateService", "휴식 종료");
         }
     }
 
