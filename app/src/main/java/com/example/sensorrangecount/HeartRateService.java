@@ -38,7 +38,7 @@ public class HeartRateService extends Service implements SensorEventListener {
     private boolean isResting = false;  // 휴식 상태를 추적하는 변수
 
     private static final String CHANNEL_ID = "HeartRateServiceChannel"; // 알림 채널 ID
-    private String heartUrl = "http://172.168.10.88:9000/heartrate/heartrate"; // 웹 서버 URL
+    private String heartUrl = "http://175.197.201.115:9000/heartrate/heartrate"; // 웹 서버 URL
 
     // 서비스가 생성될 때 호출
     @Override
@@ -158,6 +158,7 @@ public class HeartRateService extends Service implements SensorEventListener {
         }
     }
 
+    int employeeId = 3;
     // 심박수 서버 전송 메서드
     private void sendHeartRateToServer(int heartRate, String heartRateLogTime) {
         new Thread(() -> {
@@ -168,7 +169,7 @@ public class HeartRateService extends Service implements SensorEventListener {
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
-                String jsonInputString = "{\"heartrate\": " + heartRate + ", \"heartratelogtime\": \"" + heartRateLogTime + "\"}";
+                String jsonInputString = "{\"heartrate\": " + heartRate + ", \"heartratelogtime\": \"" + heartRateLogTime + "\", \"employeeId\": \"" + employeeId + "\", \"userId\": \"" + MainActivity.userId + "\"}";
                 Log.d("TAG___", "Sending Heart Rate: " + jsonInputString);
 
                 try (OutputStream os = connection.getOutputStream()) {

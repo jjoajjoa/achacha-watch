@@ -53,10 +53,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     private boolean isTimerRunning = false; // 타이머 실행 상태를 추적하는 변수
 
     // 서버 URL (테스트용 URL, 실제 사용 시 변경 필요)
-    private String heartUrl = "http://172.168.10.88:9000/heartrate/heartrate"; // 심박수 전송용 서버 URL
-    private String drivingUrl = "http://172.168.10.88:9000/heartrate/drivingtime"; // 운행 시간 전송용 서버 URL
+    private String heartUrl = "http://175.197.201.115:9000/heartrate/heartrate"; // 심박수 전송용 서버 URL
+    private String drivingUrl = "http://175.197.201.115:9000/heartrate/drivingtime"; // 운행 시간 전송용 서버 URL
 
-    static String baseurl = "http://172.168.10.88:9000/";
+    static String baseurl = "http://175.197.201.115:9000/";
     // 진동 서비스
     private Vibrator vibrator; // 진동 서비스 객체
 
@@ -216,8 +216,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (event.sensor.getType() == Sensor.TYPE_HEART_RATE) { // 심박수 센서일 경우
             int heartRate = (int) event.values[0]; // 심박수 값 가져오기
             textViewHeartRate.setText("심박수: " + heartRate + " bpm"); // 심박수 표시
-           // sendHeartRateToServer(heartRate); // 서버로 심박수 데이터 전송  -- 백그라운드랑 중복되서 삭제
-           // onHeartRateChanged(heartRate); // 심박수 변화 체크
         }
     }
 
@@ -241,39 +239,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         if (isHeartRateSensorPresent) {
             ((SensorManager) getSystemService(Context.SENSOR_SERVICE)).registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL); // 센서 리스너 등록
         }
-    }
-
-    // 심박수 데이터를 서버로 전송 -- 서비스 부분과 중복되서 사용 일단 안함
-    private void sendHeartRateToServer(int heartRate) {
-        new Thread(() -> {
-            try {
-                URL url = new URL(heartUrl); // URL 설정
-                HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
-                connection.setRequestMethod("POST"); // 요청 방식 설정
-                connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
-                connection.setDoOutput(true); // 데이터 전송 가능 설정
-
-                // JSON 형식으로 심박수 데이터 생성
-                String jsonInputString = "{\"heartrate\": " + heartRate + "}";
-                Log.d("TAG___", "Sending Heart Rate: " + jsonInputString); // 로그 출력
-
-                // 데이터 전송
-                try (OutputStream os = connection.getOutputStream()) {
-                    byte[] input = jsonInputString.getBytes("utf-8");
-                    os.write(input, 0, input.length);
-                }
-
-                int responseCode = connection.getResponseCode(); // 응답 코드 받기
-                Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
-
-                // 응답 코드가 OK가 아닐 경우 에러 로그 출력
-                if (responseCode != HttpURLConnection.HTTP_OK) {
-                    Log.e("TAG___", "Error: " + connection.getResponseMessage());
-                }
-            } catch (Exception e) {
-                Log.e("TAG___", "Error sending heart rate: " + e.getMessage()); // 예외 발생 시 에러 로그 출력
-            }
-        }).start(); // 새 스레드에서 실행
     }
 
     // 운행 시간 데이터를 서버로 전송
@@ -310,27 +275,6 @@ public class MainActivity extends Activity implements SensorEventListener {
 
     static List<Integer> heartRateList = new ArrayList<>();
 
-    /*public void onHeartRateChanged(int heartRate) {
-        // 심박수를 리스트에 추가
-        if(heartRateList.size() <= 60){
-            heartRateList.add(heartRate);
-        }
-        double average = calculateAverage(heartRateList);
-        Log.d("TAG___", "평균 심박수 : " + average); // 평균값 로그 출력
-        double threshold = average * 0.93; // 평균의 7% 감소 값
-
-        // 심박수가 특정 수치 이하일 경우 진동
-        if (heartRate < threshold) { // 60 이하일 때 진동
-            if (vibrator != null) {
-                vibrate(); // 진동 메서드 호출
-                sendEmergencyNoti(); // 졸음 알림 설정
-            } else {
-                Log.e("TAG___", "Vibrator is not initialized"); // 진동 서비스 초기화 안 됐을 경우 로그 출력
-            }
-        }
-
-    }*/
-
     // 평균 계산 메서드
     private double calculateAverage(List<Integer> heartRates) {
         int sum = 0;
@@ -351,7 +295,6 @@ public class MainActivity extends Activity implements SensorEventListener {
     }
 
     static String userId = "E001";
-
 
     // 운행 시작 알림
     public void sendStartNoti() {
