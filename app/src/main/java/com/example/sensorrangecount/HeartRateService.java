@@ -155,10 +155,7 @@ public class HeartRateService extends Service implements SensorEventListener {
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
-                String jsonInputString = String.format(
-                        "{\"heartrate\": %d, \"heartratelogtime\": \"%s\", \"employeeId\": %s, \"userId\": \"%s\"}",
-                        heartRate, heartRateLogTime, MainActivity.userId, MainActivity.userId
-                );
+                String jsonInputString = "{\"heartrate\": " + heartRate + ", \"heartratelogtime\": \"" + heartRateLogTime + "\"}";
                 Log.d("TAG___", "Sending Heart Rate: " + jsonInputString);
 
                 try (OutputStream os = connection.getOutputStream()) {
