@@ -1,14 +1,17 @@
 package com.example.sensorrangecount;
 
-import android.Manifest;
 import android.app.Activity;
-import android.content.BroadcastReceiver;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.Context;
 import android.content.Intent;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.SoundPool;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Vibrator;
@@ -17,10 +20,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.TextView;
 
-import androidx.core.app.ActivityCompat;
+import androidx.core.app.NotificationCompat;
 
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -38,6 +39,8 @@ public class MainActivity extends Activity implements SensorEventListener {
     private Button startButton; // 타이머 시작 버튼
     private Button pauseButton; // 타이머 일시정지 버튼
     private Button stopButton; // 타이머 정지 버튼
+
+    static String userId = "E001";
 
     // 심박수 센서 관련 변수
     private Sensor heartRateSensor; // 심박수 센서 객체
@@ -59,6 +62,10 @@ public class MainActivity extends Activity implements SensorEventListener {
     static String baseurl = "http://175.197.201.115:9000/";
     // 진동 서비스
     private Vibrator vibrator; // 진동 서비스 객체
+
+    private SoundPool soundPool;
+    private int alarmSoundId;
+
 
     // 앱이 실행될 때 호출되는 메서드
     @Override
@@ -101,6 +108,16 @@ public class MainActivity extends Activity implements SensorEventListener {
         // 심박수 센서 등록
         if (isHeartRateSensorPresent) {
             sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL); // 센서 리스너 등록
+        }
+        // 서비스 시작
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 포그라운드 서비스는 startForegroundService()로 시작해야 함
+            Intent serviceIntent = new Intent(this, HeartRateService.class);
+            startForegroundService(serviceIntent);
+        } else {
+            // Android 7.1 이하에서는 기존 방식대로 startService() 사용
+            Intent serviceIntent = new Intent(this, HeartRateService.class);
+            startService(serviceIntent);
         }
     }
 
@@ -283,19 +300,6 @@ public class MainActivity extends Activity implements SensorEventListener {
         }
         return (double) sum / heartRates.size();
     }
-
-    // 진동 메서드
-    private void vibrate() {
-        long[] pattern = {0, 500, 100, 500}; // 진동 패턴 설정
-        if (vibrator != null) {
-            vibrator.vibrate(pattern, -1); // 진동 발생
-        } else {
-            Log.e("TAG___", "Vibrator is not available during vibrate()"); // 진동 서비스 사용 불가일 경우 로그 출력
-        }
-    }
-
-    static String userId = "E001";
-
     // 운행 시작 알림
     public void sendStartNoti() {
         new Thread(() -> {

@@ -16,6 +16,7 @@ import android.os.PowerManager;
 import android.os.Vibrator;
 import android.util.Log;
 
+import androidx.core.app.NotificationCompat;
 import androidx.localbroadcastmanager.content.LocalBroadcastManager;
 
 import java.io.OutputStream;
@@ -28,77 +29,68 @@ import java.util.List;
 import java.util.Locale;
 
 public class HeartRateService extends Service implements SensorEventListener {
-    private SensorManager sensorManager; // 센서 매니저
-    private Sensor heartRateSensor; // 심박수 센서
-    private PowerManager.WakeLock wakeLock; // Wake Lock
+    private SensorManager sensorManager;
+    private Sensor heartRateSensor;
+    private PowerManager.WakeLock wakeLock;
+    private Vibrator vibrator;
+    private List<Integer> heartRateList = MainActivity.heartRateList;
+    private boolean isResting = false;
+    private static final String CHANNEL_ID = "HeartRateServiceChannel";
+    private static final String HEART_URL = "http://175.197.201.115:9000/heartrate/heartrate";
 
-    private Vibrator vibrator; // 진동 서비스 객체
-    List<Integer> heartRateList = MainActivity.heartRateList;
 
-    private boolean isResting = false;  // 휴식 상태를 추적하는 변수
-
-    private static final String CHANNEL_ID = "HeartRateServiceChannel"; // 알림 채널 ID
-    private String heartUrl = "http://175.197.201.115:9000/heartrate/heartrate"; // 웹 서버 URL
-
-    // 서비스가 생성될 때 호출
     @Override
     public void onCreate() {
         super.onCreate();
-        setupHeartRateSensor(); // 심박수 센서 설정
-        createNotificationChannel(); // 알림 채널 생성
-        acquireWakeLock(); // Wake Lock 획득
-
+        setupHeartRateSensor();
+        createNotificationChannel();
+        acquireWakeLock();
         vibrator = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
     }
 
-    // 서비스가 시작될 때 호출
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        startForeground(1, createNotification()); // 포그라운드 서비스 시작
+        startForeground(1, createNotification());
         return START_NOT_STICKY;
     }
 
-    // 서비스가 종료될 때 호출
     @Override
     public void onDestroy() {
         super.onDestroy();
         if (heartRateSensor != null) {
-            sensorManager.unregisterListener(this, heartRateSensor); // 센서 리스너 해제
+            sensorManager.unregisterListener(this, heartRateSensor);
         }
         if (wakeLock != null && wakeLock.isHeld()) {
-            wakeLock.release(); // Wake Lock 해제
+            wakeLock.release();
         }
     }
 
-    // 센서 데이터 변경 시 호출
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_HEART_RATE) {
             int heartRate = (int) event.values[0];
             Log.d("TAG___", "심박수: " + heartRate);
 
-            //시간
+            // 시간
             long currentTimeMillis = System.currentTimeMillis();
             String heartRateLogTime = formatDate(currentTimeMillis);
             Log.d("TAG___", "시간: " + heartRateLogTime);
 
             if (heartRate != 0) {
-                // 서버로 전송
                 sendHeartRateToServer(heartRate, heartRateLogTime);
 
                 if (heartRateList.size() < 60) {
                     heartRateList.add(heartRate);
                 }
+
                 double average = calculateAverage(heartRateList);
                 Log.d("TAG___", "평균 심박수 : " + average);
                 double threshold = average * 0.93;
 
                 if (!isResting && heartRate < threshold) {
-                    if (vibrator != null) {
-                        vibrate();
-                    } else {
-                        Log.e("TAG___", "Vibrator is not initialized");
-                    }
+                    vibrateAndShowNotification();
+                    MainActivity.sendEmergencyNoti();
+                    Log.d("알람","알람울림");
                 }
 
                 // 심박수 데이터를 브로드캐스트로 전송
@@ -110,31 +102,28 @@ public class HeartRateService extends Service implements SensorEventListener {
         }
     }
 
-    // 센서 정확도 변경 시 호출
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {}
 
-    // 심박수 센서 설정
     private void setupHeartRateSensor() {
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE); // 심박수 센서 초기화
+        heartRateSensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE);
         if (heartRateSensor != null) {
-            sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL); // 센서 리스너 등록
+            sensorManager.registerListener(this, heartRateSensor, SensorManager.SENSOR_DELAY_NORMAL);
         } else {
             Log.e("TAG___", "Heart Rate Sensor not available");
         }
     }
 
-    // 알림 생성 메서드
     private Notification createNotification() {
-        Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID)
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, CHANNEL_ID)
                 .setContentTitle("Heart Rate Monitoring")
                 .setContentText("Monitoring your heart rate...")
-                .setPriority(Notification.PRIORITY_HIGH); // 중요도 설정
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSmallIcon(R.drawable.ic_launcher_foreground);
         return builder.build();
     }
 
-    // 알림 채널 생성
     private void createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             NotificationChannel serviceChannel = new NotificationChannel(
@@ -149,27 +138,27 @@ public class HeartRateService extends Service implements SensorEventListener {
         }
     }
 
-    // Wake Lock 획득
     private void acquireWakeLock() {
         PowerManager powerManager = (PowerManager) getSystemService(POWER_SERVICE);
         wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MyApp::HeartRateWakelock");
         if (wakeLock != null) {
-            wakeLock.acquire(); // Wake Lock 획득
+            wakeLock.acquire();
         }
     }
 
-    int employeeId = 3;
-    // 심박수 서버 전송 메서드
     private void sendHeartRateToServer(int heartRate, String heartRateLogTime) {
         new Thread(() -> {
             try {
-                URL url = new URL(heartUrl);
+                URL url = new URL(HEART_URL);
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection();
                 connection.setRequestMethod("POST");
                 connection.setRequestProperty("Content-Type", "application/json");
                 connection.setDoOutput(true);
 
-                String jsonInputString = "{\"heartrate\": " + heartRate + ", \"heartratelogtime\": \"" + heartRateLogTime + "\", \"employeeId\": \"" + employeeId + "\", \"userId\": \"" + MainActivity.userId + "\"}";
+                String jsonInputString = String.format(
+                        "{\"heartrate\": %d, \"heartratelogtime\": \"%s\", \"employeeId\": %s, \"userId\": \"%s\"}",
+                        heartRate, heartRateLogTime, MainActivity.userId, MainActivity.userId
+                );
                 Log.d("TAG___", "Sending Heart Rate: " + jsonInputString);
 
                 try (OutputStream os = connection.getOutputStream()) {
@@ -179,7 +168,6 @@ public class HeartRateService extends Service implements SensorEventListener {
 
                 int responseCode = connection.getResponseCode();
                 Log.d("TAG___", "Response Code: " + responseCode);
-
                 if (responseCode != HttpURLConnection.HTTP_OK) {
                     Log.e("TAG___", "Error sending heart rate: " + connection.getResponseMessage());
                 }
@@ -188,8 +176,7 @@ public class HeartRateService extends Service implements SensorEventListener {
             }
         }).start();
     }
-    
-    // 시간 보내기 설정 (포맷)
+
     private String formatDate(long timeInMillis) {
         Date date = new Date(timeInMillis);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss", Locale.getDefault());
@@ -204,32 +191,45 @@ public class HeartRateService extends Service implements SensorEventListener {
         return (double) sum / heartRates.size();
     }
 
-    private void vibrate() {
-        long[] pattern = {0, 500, 100, 500};
+    private void vibrateAndShowNotification() {
+        // 진동 패턴 설정 (0ms 대기 후 500ms 진동, 100ms 휴지, 500ms 진동)
+        long[] vibrationPattern = {0, 500, 100, 500};
+        // 진동 시작
         if (vibrator != null) {
-            vibrator.vibrate(pattern, -1);
+            vibrator.vibrate(vibrationPattern, -1);
         } else {
             Log.e("TAG___", "Vibrator is not available during vibrate()");
         }
-    }
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
 
-    // 휴식 시작
-    private void startRest() {
-        if (!isResting) {
-            isResting = true;
-            Log.d("HeartRateService", "휴식 시작");
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 알림 채널을 생성하면서 소리 설정을 포함
+            NotificationChannel channel = new NotificationChannel(
+                    "CHANNEL_ID", "My Channel", NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Heart Rate Monitoring Alerts");
+            channel.enableVibration(true);  // 진동 활성화
+            channel.setVibrationPattern(vibrationPattern);  // 진동 패턴 설정
+            // 알림 소리 설정
+            channel.setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
+                    Notification.AUDIO_ATTRIBUTES_DEFAULT);  // 소리 설정
+            notificationManager.createNotificationChannel(channel);
         }
+        // 알림 설정
+        Notification notification = new NotificationCompat.Builder(this, "CHANNEL_ID")
+                .setContentTitle("경고")
+                .setContentText("졸음이 감지되었습니다!")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setAutoCancel(true)  // 알림 클릭 시 자동 삭제
+                .setVibrate(vibrationPattern)  // 진동 패턴 설정
+                .setPriority(NotificationCompat.PRIORITY_HIGH)  // 알림 우선순위 설정 (소리와 진동이 모두 울리도록)
+                .build();
+
+        // 알림 발송
+        notificationManager.notify(1, notification);
     }
 
-    // 휴식 종료
-    private void stopRest() {
-        if (isResting) {
-            isResting = false;
-            Log.d("HeartRateService", "휴식 종료");
-        }
-    }
 
-    // 바인딩을 위한 메서드
     @Override
     public IBinder onBind(Intent intent) {
         return null;
