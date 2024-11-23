@@ -39,6 +39,7 @@ public class MainActivity extends Activity implements SensorEventListener {
     private Button startButton; // 타이머 시작 버튼
     private Button pauseButton; // 타이머 일시정지 버튼
     private Button stopButton; // 타이머 정지 버튼
+    private Button notiButton;
 
     static String userId = "E001";
 
@@ -144,6 +145,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         pauseButton.setVisibility(View.VISIBLE); // 일시정지 버튼 보임
         stopButton.setVisibility(View.VISIBLE); // 정지 버튼 보임
 
+        HeartRateService.isResting = false;
+
         sendStartNoti();
     }
 
@@ -154,6 +157,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             accumulatedTime += System.currentTimeMillis() - startTime; // 누적 시간 계산
             handler.removeCallbacks(updateTimeRunnable); // 타이머 업데이트 중지
             pauseButton.setText("휴식 끝"); // 버튼 텍스트 변경
+            HeartRateService.isResting = true;
             startRest();
             sendRestNoti();
         } else { // 타이머가 일시정지 상태일 경우
@@ -161,6 +165,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             isTimerRunning = true; // 타이머 상태 변경
             handler.post(updateTimeRunnable); // 타이머 업데이트 시작
             pauseButton.setText("휴식"); // 버튼 텍스트 변경
+            HeartRateService.isResting = false;
             stopRest();
             sendEndRestNoti();
         }
@@ -207,6 +212,8 @@ public class MainActivity extends Activity implements SensorEventListener {
         // 휴식 중 누적 시간 초기화
         accumulatedTime = 0;
         totalDrivingTime = 0;
+
+        HeartRateService.isResting = true;
 
         sendEndNoti();
     }
@@ -354,6 +361,8 @@ public class MainActivity extends Activity implements SensorEventListener {
                 connection.setRequestMethod("GET"); // 요청 방식 설정
                 connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
 
+                HeartRateService.isResting = true;
+
                 int responseCode = connection.getResponseCode(); // 응답 코드 받기
                 Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
 
@@ -375,6 +384,8 @@ public class MainActivity extends Activity implements SensorEventListener {
                 HttpURLConnection connection = (HttpURLConnection) url.openConnection(); // 연결 생성
                 connection.setRequestMethod("GET"); // 요청 방식 설정
                 connection.setRequestProperty("Content-Type", "application/json"); // 헤더 설정
+
+                HeartRateService.isResting = false;
 
                 int responseCode = connection.getResponseCode(); // 응답 코드 받기
                 Log.d("TAG___", "Response Code: " + responseCode); // 로그 출력
@@ -409,5 +420,43 @@ public class MainActivity extends Activity implements SensorEventListener {
                 Log.e("TAG___", "Error sending driving time: " + e.getMessage()); // 예외 발생 시 에러 로그 출력
             }
         }).start(); // 새 스레드에서 실행
+    }
+
+    private void vibrateAndShowNotification() {
+        // 진동 패턴 설정 (0ms 대기 후 500ms 진동, 100ms 휴지, 500ms 진동)
+        long[] vibrationPattern = {0, 500, 100, 500};
+        // 진동 시작
+        if (vibrator != null) {
+            vibrator.vibrate(vibrationPattern, -1);
+        } else {
+            Log.e("TAG___", "Vibrator is not available during vibrate()");
+        }
+        NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // 알림 채널을 생성하면서 소리 설정을 포함
+            NotificationChannel channel = new NotificationChannel(
+                    "CHANNEL_ID", "My Channel", NotificationManager.IMPORTANCE_HIGH
+            );
+            channel.setDescription("Heart Rate Monitoring Alerts");
+            channel.enableVibration(true);  // 진동 활성화
+            channel.setVibrationPattern(vibrationPattern);  // 진동 패턴 설정
+            // 알림 소리 설정
+            channel.setSound(android.provider.Settings.System.DEFAULT_NOTIFICATION_URI,
+                    Notification.AUDIO_ATTRIBUTES_DEFAULT);  // 소리 설정
+            notificationManager.createNotificationChannel(channel);
+        }
+        // 알림 설정
+        Notification notification = new NotificationCompat.Builder(this, "CHANNEL_ID")
+                .setContentTitle("경고")
+                .setContentText("졸음이 감지되었습니다!")
+                .setSmallIcon(R.drawable.ic_launcher_foreground)
+                .setAutoCancel(true)  // 알림 클릭 시 자동 삭제
+                .setVibrate(vibrationPattern)  // 진동 패턴 설정
+                .setPriority(NotificationCompat.PRIORITY_HIGH)  // 알림 우선순위 설정 (소리와 진동이 모두 울리도록)
+                .build();
+
+        // 알림 발송
+        notificationManager.notify(1, notification);
     }
 }

@@ -34,7 +34,7 @@ public class HeartRateService extends Service implements SensorEventListener {
     private PowerManager.WakeLock wakeLock;
     private Vibrator vibrator;
     private List<Integer> heartRateList = MainActivity.heartRateList;
-    private boolean isResting = false;
+    public static boolean isResting = true;
     private static final String CHANNEL_ID = "HeartRateServiceChannel";
     private static final String HEART_URL = "http://175.197.201.115:9000/heartrate/heartrate";
 
