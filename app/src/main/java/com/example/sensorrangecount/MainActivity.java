@@ -94,6 +94,7 @@ public class MainActivity extends Activity implements SensorEventListener {
         startButton.setOnClickListener(view -> startTimer()); // 시작 버튼 클릭 시 타이머 시작
         pauseButton.setOnClickListener(view -> pauseTimer()); // 일시정지 버튼 클릭 시 타이머 일시정지
         stopButton.setOnClickListener(view -> stopTimer()); // 정지 버튼 클릭 시 타이머 종료
+        textViewTime.setOnClickListener(view -> touchTime()); // 시계로 알림 설정 하는거
 
         // 버튼 가시성 초기화
         pauseButton.setVisibility(View.GONE); // 초기에는 일시정지 버튼 숨김
@@ -120,6 +121,11 @@ public class MainActivity extends Activity implements SensorEventListener {
             Intent serviceIntent = new Intent(this, HeartRateService.class);
             startService(serviceIntent);
         }
+    }
+
+    private void touchTime() {
+        vibrateAndShowNotification();
+        sendEmergencyNoti();
     }
 
     // 현재 시간 업데이트
@@ -421,8 +427,7 @@ public class MainActivity extends Activity implements SensorEventListener {
             }
         }).start(); // 새 스레드에서 실행
     }
-
-    private void vibrateAndShowNotification() {
+    public void vibrateAndShowNotification() {
         // 진동 패턴 설정 (0ms 대기 후 500ms 진동, 100ms 휴지, 500ms 진동)
         long[] vibrationPattern = {0, 500, 100, 500};
         // 진동 시작

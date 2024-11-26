@@ -88,8 +88,8 @@ public class HeartRateService extends Service implements SensorEventListener {
                 double threshold = average * 0.93;
 
                 if (!isResting && heartRate < threshold) {
-                    vibrateAndShowNotification();
-                    MainActivity.sendEmergencyNoti();
+//                    vibrateAndShowNotification();
+//                    MainActivity.sendEmergencyNoti();
                     Log.d("알람","알람울림");
                 }
 
@@ -188,7 +188,7 @@ public class HeartRateService extends Service implements SensorEventListener {
         return (double) sum / heartRates.size();
     }
 
-    private void vibrateAndShowNotification() {
+    public void vibrateAndShowNotification() {
         // 진동 패턴 설정 (0ms 대기 후 500ms 진동, 100ms 휴지, 500ms 진동)
         long[] vibrationPattern = {0, 500, 100, 500};
         // 진동 시작
